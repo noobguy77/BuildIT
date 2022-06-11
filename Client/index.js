@@ -2692,15 +2692,30 @@ app.get("/admin/viewResumes", async (req, res) => {
 
 app.post("/getAllResumes", async(req,res)=>{
   let options = {
-    url: serverRoute + "/getAllResumes",
-    method: "post",
+    url: serverRoute + "/resumes",
+    method: "get",
     headers: {
       authorization: req.cookies.token,
     },
     json: true,
   };
   request(options, function(err,response,body){
-    res.render("allResumes",{resumes:body})
+    if(req.body.branch === "all")
+    {
+      res.render("allResumes",{resumes:body})
+    }
+    var resumesBranchWise=[];
+    for(var i=0;i<body.length;i++)
+    {
+        var rollNumber = body[i].resumeId;
+        var branchCode = rollNumber.substring(6,8);
+        console.log(req.body.branch);
+        if(branchCode === req.body.branch)
+        {
+            resumesBranchWise.push(body[i]);
+        }
+    }
+    res.render("allResumes",{resumes:resumesBranchWise})
   })
 })
 
