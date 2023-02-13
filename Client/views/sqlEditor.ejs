@@ -113,6 +113,7 @@
         box-sizing: border-box;
         height: fit-content;
         border-bottom: 0.5mm solid rgba(36, 36, 36, 0.171);
+        position: relative;
       }
       .top-title {
         font-family: silkscreen;
@@ -120,6 +121,24 @@
       }
       .top-setting {
         width: fit-content;
+        position: absolute;
+        height: fit-content;
+        right: 10px;
+        top: 110%;
+        box-sizing: border-box;
+        padding: 25px 15px;
+        display: none;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-evenly;
+        background: white;
+        z-index: 9999;
+        box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
+          rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+        border-radius: 2mm;
+        border: 1px solid rgba(0, 0, 0, 0.148);
+        transition: 0.35s;
       }
       .top-setting label {
         font-family: poppins;
@@ -127,20 +146,7 @@
         font-size: small;
         font-weight: 500;
       }
-      .top-setting select {
-        font-size: small;
-        font-family: poppins;
-        padding: 4px 0.875em;
-        padding-right: 2.4em;
-        border-radius: 1mm;
-        outline: none;
-        cursor: pointer;
-        appearance: none;
-        background-image: url("https://assets.codepen.io/103108/arrow.svg");
-        background-repeat: no-repeat;
-        background-position: right 5px center;
-        background-size: 1em;
-      }
+
       .edit {
         flex-grow: 1;
         width: 100%;
@@ -199,6 +205,12 @@
         font-weight: 500;
         text-decoration: underline;
         margin-top: 40px;
+      }
+      td,
+      th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
       }
       .inout {
         background: rgba(36, 36, 36, 0.03);
@@ -315,6 +327,206 @@
         border: none !important;
         text-align: left !important;
       }
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 9999; /* Sit on top */
+        /* Location of the box */
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0, 0, 0); /* Fallback color */
+        background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+      }
+
+      /* Modal Content */
+      .modal-content {
+        background-color: rgb(255, 255, 255);
+        margin: auto;
+        border: 1px solid #888;
+        width: 300px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: poppins;
+        border-radius: 4mm;
+        padding: 25px;
+        text-align: center;
+        padding-bottom: 35px;
+        -webkit-animation-name: animatetop;
+        -webkit-animation-duration: 0.4s;
+        animation-name: animatetop;
+      }
+      @-webkit-keyframes animatetop {
+        from {
+          top: -500px;
+          opacity: 0;
+        }
+        to {
+          top: 0;
+          opacity: 1;
+        }
+      }
+
+      @keyframes animatetop {
+        from {
+          top: -500px;
+          opacity: 0;
+        }
+        to {
+          top: 0;
+          opacity: 1;
+        }
+      }
+      .modal-content p {
+        font-size: 14px;
+        margin: 0;
+      }
+      .modal-head {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        font-family: poppins;
+        font-size: large;
+        font-weight: 600;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+      /* The Close Button */
+      .close {
+        color: rgb(58, 58, 58);
+        float: right;
+        font-size: small;
+        font-weight: 600;
+        font-weight: bold;
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .icon {
+        display: block;
+        margin: auto;
+        font-size: 40px;
+      }
+      .modal-value {
+        font-weight: 500;
+      }
+      .forms {
+        position: relative;
+        display: flex;
+        height: fit-content;
+        margin: 10px 0;
+      }
+      .forms label {
+        width: fit-content;
+        height: fit-content;
+        box-sizing: border-box;
+        display: block;
+      }
+      .forms label span {
+        padding: 10px;
+        border: 1px solid rgba(61, 61, 61, 0.66);
+        background: #ffffff;
+        position: relative;
+        z-index: 10;
+        color: black;
+        width: fit-content;
+        height: fit-content;
+        box-sizing: border-box;
+        display: inline-flex;
+        white-space: nowrap;
+      }
+      .forms label span:hover {
+        background: #ddd;
+      }
+      .forms label:first-of-type span {
+        border-radius: 6mm 0 0 6mm;
+      }
+      .forms label:last-of-type span {
+        border-radius: 0 6mm 6mm 0;
+      }
+      .forms input[type="radio"] {
+        filter: alpha(opacity=0);
+        -moz-opacity: 0;
+        -khtml-opacity: 0;
+        opacity: 0;
+        width: 0;
+        padding: 0;
+        height: 0;
+        margin: 0 -15px 0 0;
+      }
+      .forms label input[type="radio"]:checked + span {
+        background: rgb(45, 45, 45);
+        color: white;
+      }
+      input[type="submit"] {
+        position: absolute;
+        top: -1.8em;
+        display: block;
+        padding: 2em 4em 2em 10em;
+        z-index: 1;
+        border: 0;
+        line-height: 0.95em;
+        border-radius: 1em;
+        right: 10px;
+        -webkit-transition: all 0.25s ease-in-out;
+        opacity: 0;
+      }
+      input[type="submit"]:hover {
+        background: green;
+      }
+      label.checked ~ input[type="submit"] {
+        right: -10em;
+        opacity: 1;
+      }
+      .set-btn {
+        background: none;
+        border: none;
+        outline: none;
+        cursor: pointer;
+      }
+      .form-label {
+        font-size: medium;
+        font-family: poppins;
+        margin: auto 0;
+        margin-right: 15px;
+        font-weight: 500;
+        min-width: 65px;
+        color: black;
+      }
+      .set-close {
+        position: absolute;
+        right: 5px;
+        top: 5px;
+        width: 25px;
+        height: 25px;
+        line-height: 25px;
+        text-align: center;
+        border-radius: 50%;
+        background: none;
+        outline: none;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .set-close span {
+        text-align: center;
+        font-size: xx-large;
+        color: rgb(31, 31, 31);
+      }
     </style>
   </head>
   <body>
@@ -359,23 +571,72 @@
         <div class="top">
           <div class="top-head">
             <div class="top-title">BuildIT SQL Editor</div>
+            <button type="button" class="set-btn" onclick="setOpen()">
+              <span class="material-icons-outlined" id="settings">
+                settings
+              </span>
+            </button>
             <div class="top-setting">
-              <label for="theme">Theme</label>
-              <select id="theme">
-                <option value="neat">Light 1</option>
-                <option value="default">Light 2</option>
-                <option value="monokai">Dark 1</option>
-                <option value="material-darker">Dark 2</option>
-                <option value="seti">Dark 3</option>
-              </select>
-              <label for="size">Font Size</label>
-              <select id="size">
-                <option value="medium">Medium</option>
-                <option value="small">Small</option>
-                <option value="large">Large</option>
-                <option value="x-large">X-Large</option>
-                <option value="xx-large">XX-Large</option>
-              </select>
+              <button type="button" class="set-close" onclick="setClose()">
+                <span class="material-icons-outlined"> expand_less </span>
+              </button>
+              <form id="theme" class="forms">
+                <div class="form-label">Theme:</div>
+                <label>
+                  <input
+                    type="radio"
+                    name="theme"
+                    id="t1"
+                    value="neat"
+                    checked
+                  />
+                  <span>Light 1</span>
+                </label>
+                <label>
+                  <input type="radio" name="theme" id="t2" value="default" />
+                  <span>Light 2</span>
+                </label>
+                <label>
+                  <input type="radio" name="theme" id="t3" value="monokai" />
+                  <span>Dark 1</span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="theme"
+                    id="t4"
+                    value="material-darker"
+                  />
+                  <span>Dark 2</span>
+                </label>
+                <label>
+                  <input type="radio" name="theme" id="t5" value="seti" />
+                  <span>Dark 3</span>
+                </label>
+              </form>
+              <form id="size" class="forms">
+                <div class="form-label">Size:</div>
+                <label>
+                  <input type="radio" name="size" value="medium" checked />
+                  <span>Medium</span>
+                </label>
+                <label>
+                  <input type="radio" name="size" value="small" />
+                  <span>Small</span>
+                </label>
+                <label>
+                  <input type="radio" name="size" value="large" />
+                  <span>Large</span>
+                </label>
+                <label>
+                  <input type="radio" name="size" value="x-large" />
+                  <span>XL</span>
+                </label>
+                <label>
+                  <input type="radio" name="size" value="xx-large" />
+                  <span>XXL</span>
+                </label>
+              </form>
             </div>
           </div>
           <div class="edit" id="edit">
@@ -434,7 +695,14 @@
           </div>
         </div>
       </div>
+
       <script>
+        function setOpen() {
+          document.querySelector(".top-setting").style.display = "flex";
+        }
+        function setClose() {
+          document.querySelector(".top-setting").style.display = "none";
+        }
         var editor = CodeMirror.fromTextArea(
           document.getElementById("code-input"),
           {
@@ -455,6 +723,7 @@
         let editorpart = document.querySelector(".CodeMirror-scroll");
         let status = document.querySelector(".bot-head");
         let content = document.querySelectorAll(".content");
+        let settings = document.getElementById("settings");
         document.getElementById("size").addEventListener("change", (e) => {
           editorpart.style.fontSize = e.target.value;
         });
@@ -465,6 +734,7 @@
             editor.setOption("theme", str);
             setCookie(str);
             if (str == "monokai") {
+              settings.style.color = "rgb(245,245,245)";
               status.style.borderColor = "rgba(255,255,255,0.1)";
               document.body.style.background = "rgb(39,40,34)";
               document.body.style.color = "rgb(245,245,245)";
@@ -487,6 +757,7 @@
                 item.style.background = "rgb(85,85,85)";
               });
             } else if (str == "material-darker") {
+              settings.style.color = "rgb(245,245,245)";
               qhead.style.color = "rgb(177,131,207)";
               document.body.style.background = "rgb(33,33,33)";
               document.body.style.color = "rgb(245,245,245)";
@@ -508,6 +779,7 @@
                 item.style.background = "rgb(85,85,85)";
               });
             } else if (str == "seti") {
+              settings.style.color = "rgb(245,245,245)";
               status.style.borderColor = "rgba(255,255,255,0.1)";
               qhead.style.color = "rgb(206,184,96)";
               document.body.style.background = "rgb(21,23,24)";
@@ -530,6 +802,7 @@
                 item.style.background = "rgb(85,85,85)";
               });
             } else {
+              settings.style.color = "black";
               status.style.borderColor = "rgba(36, 36, 36, 0.171)";
               document.body.style.background = "white";
               document.body.style.color = "rgb(37, 37, 37)";
@@ -608,6 +881,7 @@
             let str = getCookie("displayBuildit");
             editor.setOption("theme", str);
             if (str == "monokai") {
+              settings.style.color = "rgb(245,245,245)";
               status.style.borderColor = "rgba(255,255,255,0.1)";
               document.body.style.background = "rgb(39,40,34)";
               document.body.style.color = "rgb(245,245,245)";
@@ -630,6 +904,7 @@
                 item.style.background = "rgb(85,85,85)";
               });
             } else if (str == "material-darker") {
+              settings.style.color = "rgb(245,245,245)";
               qhead.style.color = "rgb(177,131,207)";
               document.body.style.background = "rgb(33,33,33)";
               document.body.style.color = "rgb(245,245,245)";
@@ -651,6 +926,7 @@
                 item.style.background = "rgb(85,85,85)";
               });
             } else if (str == "seti") {
+              settings.style.color = "rgb(245,245,245)";
               status.style.borderColor = "rgba(255,255,255,0.1)";
               qhead.style.color = "rgb(206,184,96)";
               document.body.style.background = "rgb(21,23,24)";
@@ -673,6 +949,7 @@
                 item.style.background = "rgb(85,85,85)";
               });
             } else {
+              settings.style.color = "white";
               status.style.borderColor = "rgba(36, 36, 36, 0.171)";
               document.body.style.background = "white";
               document.body.style.color = "rgb(37, 37, 37)";
@@ -700,20 +977,50 @@
               qhead.style.color = "rgb(37,37,37)";
             }
             if (str == "neat") {
-              $("#theme").prop("selectedIndex", 0);
+              $("#t1").prop("checked", true);
             } else if (str == "default") {
-              $("#theme").prop("selectedIndex", 1);
+              $("#t2").prop("checked", true);
             } else if (str == "monokai") {
-              $("#theme").prop("selectedIndex", 2);
+              $("#t3").prop("checked", true);
             } else if (str == "material-darker") {
-              $("#theme").prop("selectedIndex", 3);
+              $("#t4").prop("checked", true);
             } else {
-              $("#theme").prop("selectedIndex", 4);
+              $("#t5").prop("checked", true);
             }
           }, 10);
         };
       </script>
     </section>
+    <div id="myModal" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="material-icons-round icon"> done_outline </span>
+        <div class="modal-head">
+          <span>Success!!</span>
+        </div>
+        <p>You have successfully solved the question</p>
+        <div class="modal-value">-10 Points-</div>
+        <span class="close">Close</span>
+      </div>
+    </div>
+    <script>
+      var modal = document.getElementById("myModal");
+
+      // Get the <span> element that closes the modal
+      var span = document.getElementsByClassName("close")[0];
+
+      // When the user clicks on <span> (x), close the modal
+      span.onclick = function () {
+        modal.style.display = "none";
+      };
+
+      // When the user clicks anywhere outside of the modal, close it
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+    </script>
     <script src="plugins/jQuery/jquery.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   </body>
