@@ -18,7 +18,6 @@ exports.create = (req, res) => {
   const dbSession = new DB({
     dbSessionId: req.body.dbSessionId,
     dbSessionName: req.body.dbSessionName,
-    dbSessionDate: req.body.dbSessionDate,
     dbSessionStartDay: req.body.dbSessionStartDay,
     dbSessionEndDay: req.body.dbSessionEndDay,
     dbSessionStartTime: req.body.dbSessionStartTime,
@@ -98,9 +97,7 @@ exports.update = (req, res) => {
     { dbSessionId: req.params.dbSessionId },
     {
       $set: {
-        dbSessionId: req.body.dbSessionId,
         dbSessionName: req.body.dbSessionName,
-        dbSessionDate: req.body.dbSessionDate,
         dbSessionStartDay: req.body.dbSessionStartDay,
         dbSessionEndDay: req.body.dbSessionEndDay,
         dbSessionStartTime: req.body.dbSessionStartTime,
@@ -156,5 +153,31 @@ exports.delete = (req, res) => {
         success: false,
         message: "Could not delete dbSession with id " + req.params.dbSessionId,
       });
+    });
+};
+
+// Find a single dbSession with a dbSessionId for checking duration
+exports.getDuration = (req, callback) => {
+  DB.find({ dbSessionId: req.body.dbSessionId })
+    .then((dbSession) => {
+      if (!dbSession) {
+        return callback("dbSession not found ", null);
+      }
+      dbSession = dbSession[0];
+      let durationData = {
+        startTime: dbSession.dbSessionStartTime,
+        endTime: dbSession.dbSessionEndTime,
+        startDate: dbSession.dbSessionStartDay,
+        endDate: dbSession.dbSessionEndDay,
+        duration: Number(dbSession.dbSessionDuration),
+        dbSessionName: dbSession.dbSessionName
+      };
+      return callback(null, durationData);
+    })
+    .catch((err) => {
+      if (err.kind === "ObjectId") {
+        return callback("dbSession not found", null);
+      }
+      return callback("Error retrieving dbSession (getDuration)", null);
     });
 };
