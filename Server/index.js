@@ -80,7 +80,8 @@ mongoose
   })
   .then(() => {
     console.log("Successfully connected to the mongodb database");
-    sqlCon.query("SELECT * FROM students", function (err, result, fields) {
+    var sql = "SELECT * FROM students;"
+    sqlCon.query(sql, function (err, result, fields) {
       if (err) throw err;
       console.log(result);
     });
@@ -109,6 +110,12 @@ const skillUp = require("../Server/controllers/skillUp.controller.js");
 const discussion = require("../Server/controllers/discussion.controller.js");
 const emailSession = require("../Server/controllers/emailSession.controller.js");
 const visitors = require("../Server/controllers/visitorAccess.controller.js");
+const dbSessions = require("../Server/controllers/dbSession.controller.js");
+const dbQuestions = require("../Server/controllers/dbQuestion.controller.js");
+const dbSubmissions = require("../Server/controllers/dbSubmission.controller.js");
+const dbParticipations = require("../Server/controllers/dbParticipation.controller.js");
+
+
 
 // Require contest routes
 require("./routes/contest.route.js")(app);
@@ -157,6 +164,8 @@ require("./routes/visitorAccess.route")(app);
 require("./routes/dbQuestion.route")(app);
 //Require dbSession routes
 require("./routes/dbSession.route")(app);
+//Require dbSubmission routes
+require("./routes/dbSubmission.route")(app);
 
 // Examples
 app.get("/testGet", async (req, res) => {
@@ -242,6 +251,8 @@ app.post("/isOngoing", middleware.checkToken, async (req, res) => {
     });
   });
 });
+
+
 
 app.post("/validateMcq", middleware.checkToken, async (req, res) => {
   if (req.body.contestId) {
@@ -365,7 +376,6 @@ app.post("/validateSubmission", middleware.checkToken, async (req, res) => {
     if (!body.status || err)
       return res.status(404).send({ message: "user logged out!" });
   });
-
   if (req.body.contestId.length !== 0) {
     contests.getDuration(req, (err, duration) => {
       if (err) {
@@ -914,6 +924,150 @@ app.post("/validateSubmission", middleware.checkToken, async (req, res) => {
   }
 });
 
+app.post('/validateSubmissionDB', (req, res) => {
+  let options11 = {
+    method: "get",
+    json: true,
+    url: process.env.clientAddress + "/userSession/" + req.body.user,
+  };
+  request(options11, function(err, response, body) {
+    if (!body.status || err) {
+      return res.status(404).send({
+        message: "user logged out!"
+      });
+    }
+  });
+  if (req.body.dbSessionId.length !== 0) {
+    dbSessions.getDuration(req, (err, duration) => {
+      if (err) {
+        res.status(404).send({ message: err });
+      } else {
+      let date = new Date();
+      let today = date.toLocaleDateString();
+      if (today.length === 9) {
+        today = "0" + today;
+      }
+      var accepted = false;
+      let day = date.getDate();
+      if (day < 10) {
+        day = "0" + String(day);
+      }
+      let month = date.getMonth() + 1;
+      if (month < 10) {
+        month = "0" + String(month);
+      }
+      let year = date.getFullYear();
+      if (!localServer) {
+        today = `${year}-${day}-${month}`;
+      } else {
+        today = `${year}-${month}-${day}`;
+      }
+
+      let minutes = date.getMinutes();
+      let hours = date.getHours();
+      if (hours < 10) {
+        hours = "0" + String(hours);
+      }
+
+      if (minutes < 10) {
+        minutes = "0" + String(minutes);
+      }
+
+      let currentTime = `${hours}${minutes}`;
+      currentTime = eval(currentTime);
+      currentTime = moment().tz("Asia/Kolkata").format("HHmm");
+      console.log(duration,"Hey",accepted);
+      if (
+        duration.startDate.toString() <= today &&
+        duration.endDate.toString() >= today &&
+        duration.startTime.toString() < currentTime &&
+        duration.endTime.toString() > currentTime
+      ) {
+        accepted = true;
+        
+      } else {
+        accepted = false;
+      }
+      
+
+      if(accepted){
+        dbQuestions.getTestCases(req, (err, testcases) => {
+          console.log(req.body)
+          if (err) {
+            res.status(404).send({
+              message: "dbQuestion not found with id " + req.body.questionId,
+            });
+          } else {
+            let options = {
+              method: "post",
+              body: {
+                dbSessionId: testcases.dbSessionId,
+                source_code: req.body.source_code,
+                expected_output: testcases.questionHiddenOutput,
+                rollNumber: req.decoded.username,
+                tableName: testcases.tableName
+              },
+              json: true,
+              url: process.env.serverAddress + "/evaluateCode",
+            };
+            let result = {
+              dbSessionId: testcases.dbSessionId,
+              rollNumber: req.decoded.username,
+              participationId: req.decoded.username + testcases.dbSessionId,
+              tableName: testcases.tableName,
+              source_code: req.body.source_code,
+            };
+            dbParticipations.findUserTime(req, (err, participation) => {
+              if (err) {
+                res.status(404).send({ message: err });
+              } else {
+                participation = participation[0];
+                let momentDate = new moment();
+                let validTime = participation.validTill;
+                if (momentDate.isBefore(participation.validTill) || req.decoded.admin) {
+                  setTimeout(() => {
+                    request(options,function (err, response, body) {
+                      if (err) {
+                        res.status(404).send({ message: err || "Error while evaluating DB Submission" });
+                      } else {
+                        let data = JSON.parse(body);
+                        result.score = data.score;
+                        result.participationId = req.decoded.username + result.dbSessionId;
+                        dbParticipations.acceptSubmission(result, (err, doc) => {
+                          if (err) {
+                            res.send({ message: err });
+                          } else{
+                            dbSubmissions.create(req, result, (err, sub) => {
+                              if (err) {
+                                return res.status(404).send({
+                                  message: err,
+                                });
+                              } else {
+                                return res.send(sub);
+                              }
+                            });
+                          }
+                        });
+                      }
+                    });
+                  },timeOut);
+                } else {
+                  res
+                    .status(403)
+                    .send({ message: "Your test duration has expired" });
+                }
+              } 
+            });
+          }
+        });
+      } else {
+        res.status(403).send({ message: "The contest window is not open" });
+      }
+    }
+    });
+  }
+});
+
 app.get("/getScores", middleware.checkToken, async (req, res) => {
   let username = req.decoded.username;
   // let contestId = req.cookies.contestId || req.body.contestId;
@@ -1090,7 +1244,7 @@ app.post("/uploadpdf", middleware.checkTokenAdmin, async (req, res) => {
           message: "uploaded",
           filename: filename,
         });
-      }
+      }   
     });
   } else {
     res.send("Failed");
