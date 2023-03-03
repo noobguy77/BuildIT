@@ -49,6 +49,7 @@ exports.findOne = (req, res) => {
         });
       }
       dbSession = dbSession[0];
+
       res.status(200).send({
         success: true,
         data: dbSession,
@@ -169,8 +170,7 @@ exports.getDuration = (req, callback) => {
         endTime: dbSession.dbSessionEndTime,
         startDate: dbSession.dbSessionStartDay,
         endDate: dbSession.dbSessionEndDay,
-        duration: Number(dbSession.dbSessionDuration),
-        dbSessionName: dbSession.dbSessionName
+        dbSessionName: dbSession.dbSessionName,
       };
       return callback(null, durationData);
     })

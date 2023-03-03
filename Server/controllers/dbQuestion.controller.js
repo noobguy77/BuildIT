@@ -19,58 +19,78 @@ exports.create = (req, res) => {
           });
         });
       // Create a Question
-      sql = "SELECT * FROM "+req.body.tableName;
+      sql = "SELECT * FROM " + req.body.tableName;
       sqlCon.query(sql, function (err, result) {
-        if (err){
+        if (err) {
           return res.status(500).send({
             success: false,
             message:
-              err.message || "Some error occurred while retrieving table for the question." + req.body.questionId,
+              err.message ||
+              "Some error occurred while retrieving table for the question." +
+                req.body.questionId,
           });
         }
-        sqlCon.query(req.body.questionSolution,function(err1,result1){
-          if (err1){
+        sqlCon.query(req.body.questionSolution, function (err1, result1) {
+          if (err1) {
             return res.status(500).send({
               success: false,
               message:
-                err1.message || "Some error occurred while retrieving solution table for the question." + req.body.questionId,
-              });
-            }
-            const question = new Question({
-              questionId: req.body.questionId,
-              questionName: req.body.questionName,
-              dbSessionId: req.body.dbSessionId,
-              questionDescriptionText: req.body.questionDescriptionText,
-              questionInputText: req.body.questionInputText,
-              questionOutputText: req.body.questionOutputText,
-              questionExampleInput: req.body.questionExampleInput,
-              questionExampleOutput: req.body.questionExampleOutput,
-              questionHiddenOutput: result1,
-              questionExplanation: req.body.questionExplanation,
-              score: req.body.score,
-              difficulty: req.body.difficulty,
-              tableName: req.body.tableName,
-              tableData: result,
-              author: req.body.author,
-              editorial: req.body.editorial,
+                err1.message ||
+                "Some error occurred while retrieving solution table for the question." +
+                  req.body.questionId,
             });
-            // Save Question in the database
-            question
-              .save()
-              .then((data) => {
-                res.status(200).send({
-                  success: true,
-                  data : data,
-                });
-              })
-              .catch((err) => {
-                res.status(500).send({
-                  success: false,
-                  message:
-                    err.message || "Some error occurred while creating the Question.",
-                });
-              });
-        })
+          } else {
+            sqlCon.query(
+              "DESC " + req.body.tableName,
+              function (err2, result2) {
+                if (err) {
+                  return res.status(500).send({
+                    success: false,
+                    message:
+                      err1.message ||
+                      "Some error occurred while retrieving schema of table for the question." +
+                        req.body.questionId,
+                  });
+                } else {
+                  const question = new Question({
+                    questionId: req.body.questionId,
+                    questionName: req.body.questionName,
+                    dbSessionId: req.body.dbSessionId,
+                    questionDescriptionText: req.body.questionDescriptionText,
+                    questionSchema: result2,
+                    questionExampleInput: req.body.questionExampleInput,
+                    questionExampleOutput: req.body.questionExampleOutput,
+                    questionHiddenOutput: result1,
+                    questionExplanation: req.body.questionExplanation,
+                    score: req.body.score,
+                    difficulty: req.body.difficulty,
+                    tableName: req.body.tableName,
+                    tableData: result,
+                    author: req.body.author,
+                    editorial: req.body.editorial,
+                  });
+                  // Save Question in the database
+                  question
+                    .save()
+                    .then((data) => {
+                      res.status(200).send({
+                        success: true,
+                        data: data,
+                      });
+                    })
+                    .catch((err) => {
+                      res.status(500).send({
+                        success: false,
+                        message:
+                          err.message ||
+                          "Some error occurred while creating the Question.",
+                      });
+                    });
+                }
+              }
+            );
+          }
+        });
       });
     })
     .catch((err) => {
@@ -130,7 +150,7 @@ exports.findAll = (req, res) => {
 
 // Retrieve all questions from a contest
 exports.findAllContest = (req, res) => {
-  Question.find({ contestId: req.params.contestId })
+  Question.find({ dbSessionId: req.params.contestId })
     .then((questions) => {
       if (!questions) {
         return res.status(404).send({
@@ -271,10 +291,12 @@ exports.getTestCases = (req, callback) => {
   Question.find({ questionId: req.body.questionId })
     .then((question) => {
       if (!question) {
-        return callback("Couldn't find dbQuestion with id "+req.body.questionId, null);
+        return callback(
+          "Couldn't find dbQuestion with id " + req.body.questionId,
+          null
+        );
       } else {
         question = question[0];
-        console.log(question)
         testcases = {
           dbSessionId: question.dbSessionId,
           tableName: question.tableName,
@@ -286,10 +308,9 @@ exports.getTestCases = (req, callback) => {
     .catch((err) => {
       if (err.kind === "ObjectId") {
         return callback("Couldn't find dbQuestion, caught exception", null);
+      } else {
+        return callback("Error retrieving data(dbQuestion getTestCases)", null);
       }
-      else{
-      return callback("Error retrieving data(dbQuestion getTestCases)", null);
-    }
     });
 };
 
