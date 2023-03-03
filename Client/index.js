@@ -3301,7 +3301,11 @@ app.get(
         let options = {
           url:
             serverRoute +
-            "/emailSubmissions/" +req.params.emailId+req.params.emailQuestionId+"/"+req.cookies.username.toUpperCase(),
+            "/emailSubmissions/" +
+            req.params.emailId +
+            req.params.emailQuestionId +
+            "/" +
+            req.cookies.username.toUpperCase(),
           method: "get",
           headers: {
             authorization: req.cookies.token,
@@ -3799,10 +3803,14 @@ app.get("/sqlEditor/:dbQuestionId", async (req, res) => {
     json: true,
   };
   request(options, (err, response, body) => {
+    let jsString = JSON.stringify(body.data[0].questionHiddenOutput);
     if (body.success) {
       let expired = true;
       let contest = true;
-      if (body.data[0].contestId == "" || body.data[0].contestId.length == 0) {
+      if (
+        body.data[0].dbSessionId == "" ||
+        body.data[0].dbSessionId.length == 0
+      ) {
         contest = false;
         res.render("sqlEditor", {
           expired: false,
@@ -3810,10 +3818,12 @@ app.get("/sqlEditor/:dbQuestionId", async (req, res) => {
           data: body.data[0],
           token: req.cookies.token,
           username: req.cookies.username,
+          serverUrl: serverRoute,
+          jsString: jsString,
         });
       } else {
         let options = {
-          url: serverRoute + "/dbSession/" + body.data[0].contestId,
+          url: serverRoute + "/dbSession/" + body.data[0].dbSessionId,
           method: "get",
           headers: {
             authorization: req.cookies.token,
@@ -3833,6 +3843,8 @@ app.get("/sqlEditor/:dbQuestionId", async (req, res) => {
             data: body.data[0],
             token: req.cookies.token,
             username: req.cookies.username,
+            serverUrl: serverRoute,
+            jsString: jsString,
           });
         });
       }
@@ -3859,7 +3871,7 @@ app.get("/dbmsChallenges", checkSignIn, async (req, res) => {
     if (body.success) {
       body.data.shift();
       body.data.forEach((question) => {
-        if (question.contestId == "" || question.contestId.length == 0) {
+        if (question.dbSessionId == "" || question.dbSessionId.length == 0) {
           practice.push(question);
         }
       });

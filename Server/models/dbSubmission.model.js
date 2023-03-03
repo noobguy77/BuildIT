@@ -4,14 +4,15 @@ const mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
 var dbSubmissionSchema = new Schema({
-    dbSessionId: String,
-    questionId: String,
-    rollNumber: String,
-    sqlCode: String,    
-    score: String,
-    submissionTime: String,
-    tableName: String,
-    color : String,
+  submissionId: String,
+  dbSessionId: String,
+  rollNumber: String,
+  score: Number,
+  submissionTime: String,
+  solvedQuestions: {
+    type: Map,
+    of: String,
+  },
 });
 
 module.exports = mongoose.model("dbSubmission", dbSubmissionSchema);

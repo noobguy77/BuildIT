@@ -80,7 +80,7 @@ mongoose
   })
   .then(() => {
     console.log("Successfully connected to the mongodb database");
-    var sql = "SELECT * FROM students;"
+    var sql = "SELECT * FROM students;";
     sqlCon.query(sql, function (err, result, fields) {
       if (err) throw err;
       console.log(result);
@@ -114,8 +114,6 @@ const dbSessions = require("../Server/controllers/dbSession.controller.js");
 const dbQuestions = require("../Server/controllers/dbQuestion.controller.js");
 const dbSubmissions = require("../Server/controllers/dbSubmission.controller.js");
 const dbParticipations = require("../Server/controllers/dbParticipation.controller.js");
-
-
 
 // Require contest routes
 require("./routes/contest.route.js")(app);
@@ -251,8 +249,6 @@ app.post("/isOngoing", middleware.checkToken, async (req, res) => {
     });
   });
 });
-
-
 
 app.post("/validateMcq", middleware.checkToken, async (req, res) => {
   if (req.body.contestId) {
@@ -924,146 +920,63 @@ app.post("/validateSubmission", middleware.checkToken, async (req, res) => {
   }
 });
 
-app.post('/validateSubmissionDB', (req, res) => {
-  let options11 = {
-    method: "get",
-    json: true,
-    url: process.env.clientAddress + "/userSession/" + req.body.user,
-  };
-  request(options11, function(err, response, body) {
-    if (!body.status || err) {
-      return res.status(404).send({
-        message: "user logged out!"
-      });
-    }
-  });
+const dateCompare = (date, time, sdate, stime) => {
+  let parts = date.split("-");
+  let odate = parts[1] + "-" + parts[0] + "-" + parts[2];
+  let split = time.slice(0, 2) + ":" + time.slice(2, 4);
+  let sparts = sdate.split("-");
+  let sodate = sparts[1] + "-" + sparts[0] + "-" + sparts[2];
+  let ssplit = stime.slice(0, 2) + ":" + stime.slice(2, 4);
+  return (
+    new Date(odate + " " + split) > new Date() &&
+    new Date(sodate + " " + ssplit) <= new Date()
+  );
+};
+
+app.post("/validateSubmissionDB", middleware.checkToken, async (req, res) => {
+  let accepted = false;
   if (req.body.dbSessionId.length !== 0) {
     dbSessions.getDuration(req, (err, duration) => {
       if (err) {
         res.status(404).send({ message: err });
       } else {
-      let date = new Date();
-      let today = date.toLocaleDateString();
-      if (today.length === 9) {
-        today = "0" + today;
+        if (
+          !req.body.dbSessionId ||
+          dateCompare(
+            duration.endDate,
+            duration.endTime,
+            duration.startDate,
+            duration.startTime
+          )
+        ) {
+          accepted = true;
+        }
+        if (accepted) {
+          dbSubmissions.create(req, async (err, result) => {
+            if (err) {
+              res.status(403).send({ message: err.message });
+            } else {
+              res.send({
+                success: true,
+                data: result,
+              });
+            }
+          });
+        } else {
+          res.status(403).send({ message: "The contest window is not open" });
+        }
       }
-      var accepted = false;
-      let day = date.getDate();
-      if (day < 10) {
-        day = "0" + String(day);
-      }
-      let month = date.getMonth() + 1;
-      if (month < 10) {
-        month = "0" + String(month);
-      }
-      let year = date.getFullYear();
-      if (!localServer) {
-        today = `${year}-${day}-${month}`;
+    });
+  } else {
+    dbSubmissions.create(req, async (err, result) => {
+      if (err) {
+        res.status(403).send({ message: err.message });
       } else {
-        today = `${year}-${month}-${day}`;
-      }
-
-      let minutes = date.getMinutes();
-      let hours = date.getHours();
-      if (hours < 10) {
-        hours = "0" + String(hours);
-      }
-
-      if (minutes < 10) {
-        minutes = "0" + String(minutes);
-      }
-
-      let currentTime = `${hours}${minutes}`;
-      currentTime = eval(currentTime);
-      currentTime = moment().tz("Asia/Kolkata").format("HHmm");
-      console.log(duration,"Hey",accepted);
-      if (
-        duration.startDate.toString() <= today &&
-        duration.endDate.toString() >= today &&
-        duration.startTime.toString() < currentTime &&
-        duration.endTime.toString() > currentTime
-      ) {
-        accepted = true;
-        
-      } else {
-        accepted = false;
-      }
-      
-
-      if(accepted){
-        dbQuestions.getTestCases(req, (err, testcases) => {
-          console.log(req.body)
-          if (err) {
-            res.status(404).send({
-              message: "dbQuestion not found with id " + req.body.questionId,
-            });
-          } else {
-            let options = {
-              method: "post",
-              body: {
-                dbSessionId: testcases.dbSessionId,
-                source_code: req.body.source_code,
-                expected_output: testcases.questionHiddenOutput,
-                rollNumber: req.decoded.username,
-                tableName: testcases.tableName
-              },
-              json: true,
-              url: process.env.serverAddress + "/evaluateCode",
-            };
-            let result = {
-              dbSessionId: testcases.dbSessionId,
-              rollNumber: req.decoded.username,
-              participationId: req.decoded.username + testcases.dbSessionId,
-              tableName: testcases.tableName,
-              source_code: req.body.source_code,
-            };
-            dbParticipations.findUserTime(req, (err, participation) => {
-              if (err) {
-                res.status(404).send({ message: err });
-              } else {
-                participation = participation[0];
-                let momentDate = new moment();
-                let validTime = participation.validTill;
-                if (momentDate.isBefore(participation.validTill) || req.decoded.admin) {
-                  setTimeout(() => {
-                    request(options,function (err, response, body) {
-                      if (err) {
-                        res.status(404).send({ message: err || "Error while evaluating DB Submission" });
-                      } else {
-                        let data = JSON.parse(body);
-                        result.score = data.score;
-                        result.participationId = req.decoded.username + result.dbSessionId;
-                        dbParticipations.acceptSubmission(result, (err, doc) => {
-                          if (err) {
-                            res.send({ message: err });
-                          } else{
-                            dbSubmissions.create(req, result, (err, sub) => {
-                              if (err) {
-                                return res.status(404).send({
-                                  message: err,
-                                });
-                              } else {
-                                return res.send(sub);
-                              }
-                            });
-                          }
-                        });
-                      }
-                    });
-                  },timeOut);
-                } else {
-                  res
-                    .status(403)
-                    .send({ message: "Your test duration has expired" });
-                }
-              } 
-            });
-          }
+        res.send({
+          success: true,
+          data: result,
         });
-      } else {
-        res.status(403).send({ message: "The contest window is not open" });
       }
-    }
     });
   }
 });
@@ -1244,7 +1157,7 @@ app.post("/uploadpdf", middleware.checkTokenAdmin, async (req, res) => {
           message: "uploaded",
           filename: filename,
         });
-      }   
+      }
     });
   } else {
     res.send("Failed");

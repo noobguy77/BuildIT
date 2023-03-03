@@ -243,7 +243,6 @@
       .statusVal {
         font-size: small;
         font-weight: 600;
-        color: rgb(21, 172, 49);
       }
       .btns {
         display: inline-flex;
@@ -265,6 +264,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
       }
       .btns button span {
         font-size: large;
@@ -320,6 +320,7 @@
         transition: max-height 0.2s ease-out;
         background-color: #f1f1f1;
         font-size: 14px;
+        overflow: auto;
       }
       .content table,
       .content th,
@@ -527,6 +528,37 @@
         font-size: xx-large;
         color: rgb(31, 31, 31);
       }
+      .loader-back {
+        background: white;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        display: none;
+      }
+      .loader {
+        border: 4px solid #f3f3f3; /* Light grey */
+        border-top: 4px solid #2f2f2f; /* Blue */
+        border-radius: 50%;
+        width: 10px;
+        height: 10px;
+        animation: spin 2s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
@@ -537,23 +569,10 @@
           <p><%= data.questionDescriptionText %></p>
           <table>
             <thead>
-              <th>Column 1</th>
-              <th>Column 2</th>
+              <th>Field</th>
+              <th>Type</th>
             </thead>
-            <tbody>
-              <tr>
-                <td>Value 1 Col 1</td>
-                <td>Value 1 Col 2</td>
-              </tr>
-              <tr>
-                <td>Value 2 Col 1</td>
-                <td>Value 2 Col 2</td>
-              </tr>
-              <tr>
-                <td>Value 3 Col 1</td>
-                <td>Value 3 Col 2</td>
-              </tr>
-            </tbody>
+            <tbody id="schema"></tbody>
           </table>
           <p class="label">Sample Input</p>
           <div id="inputHtml"><%= data.questionExampleInput %></div>
@@ -647,18 +666,24 @@
           <div class="bot-head">
             <div class="status">
               <div class="statusName">STATUS</div>
-              <div class="statusVal">Success</div>
+              <div class="statusVal">Null</div>
             </div>
             <% if(!expired){ %>
             <div class="btns">
-              <button type="button" onclick="retriveQuery()">
+              <button type="button" onclick="retriveQuery(false)">
                 Run Query <span class="material-icons"> play_arrow </span>
+                <div class="loader-back" id="load1">
+                  <div class="loader"></div>
+                </div>
               </button>
-              <button type="button">
+              <button type="button" onclick="retriveQuery(true)">
                 Submit Query
                 <span class="material-icons">
                   keyboard_double_arrow_right
                 </span>
+                <div class="loader-back" id="load2">
+                  <div class="loader"></div>
+                </div>
               </button>
             </div>
             <%}%>
@@ -666,28 +691,22 @@
           <div class="bot-content">
             <div class="output">
               <button class="collapsible">Your Output</button>
-              <div class="content">
+              <div class="content" id="out1">
                 <table>
-                  <% for(var i=0;i<4;i++){ %>
                   <tr>
-                    <td><%= i+1 %></td>
-                    <td>Lorem ipsum dolor sit amet.</td>
+                    <td>No Output</td>
                   </tr>
-                  <%}%>
                 </table>
               </div>
             </div>
             <div class="output">
               <button class="collapsible">Expected Output</button>
-              <div class="content">
+              <div class="content" id="out2">
                 <table>
                   <table>
-                    <% for(var i=0;i<4;i++){ %>
                     <tr>
-                      <td><%= i+1 %></td>
-                      <td>Lorem ipsum dolor sit amet.</td>
+                      <td>No Output</td>
                     </tr>
-                    <%}%>
                   </table>
                 </table>
               </div>
@@ -695,301 +714,6 @@
           </div>
         </div>
       </div>
-
-      <script>
-        function setOpen() {
-          document.querySelector(".top-setting").style.display = "flex";
-        }
-        function setClose() {
-          document.querySelector(".top-setting").style.display = "none";
-        }
-        var editor = CodeMirror.fromTextArea(
-          document.getElementById("code-input"),
-          {
-            lineNumbers: true,
-            mode: "text/x-sql",
-            theme: "neat",
-            lineWrapping: true,
-          }
-        );
-        let inout = document.querySelector(".inout");
-        let th = document.querySelectorAll("th");
-        let td = document.querySelectorAll("td");
-        let table = document.querySelectorAll("table");
-        let bottom = document.querySelector(".bottom");
-        let topHead = document.querySelector(".top-head");
-        let left = document.querySelector(".left");
-        let qhead = document.querySelector(".qhead");
-        let editorpart = document.querySelector(".CodeMirror-scroll");
-        let status = document.querySelector(".bot-head");
-        let content = document.querySelectorAll(".content");
-        let settings = document.getElementById("settings");
-        document.getElementById("size").addEventListener("change", (e) => {
-          editorpart.style.fontSize = e.target.value;
-        });
-        document
-          .getElementById("theme")
-          .addEventListener("change", function (event) {
-            let str = event.target.value.toString();
-            editor.setOption("theme", str);
-            setCookie(str);
-            if (str == "monokai") {
-              settings.style.color = "rgb(245,245,245)";
-              status.style.borderColor = "rgba(255,255,255,0.1)";
-              document.body.style.background = "rgb(39,40,34)";
-              document.body.style.color = "rgb(245,245,245)";
-              qhead.style.color = "rgb(211,38,100)";
-              inout.style.borderColor = "rgba(255,255,255,0.1)";
-              inout.style.background = "rgba(255,255,255,0.2)";
-              bottom.style.borderColor = "rgba(255,255,255,0.1)";
-              topHead.style.borderColor = "rgba(255,255,255,0.1)";
-              left.style.borderColor = "rgba(255,255,255,0.1)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              content.forEach((item) => {
-                item.style.background = "rgb(85,85,85)";
-              });
-            } else if (str == "material-darker") {
-              settings.style.color = "rgb(245,245,245)";
-              qhead.style.color = "rgb(177,131,207)";
-              document.body.style.background = "rgb(33,33,33)";
-              document.body.style.color = "rgb(245,245,245)";
-              inout.style.borderColor = "rgba(255,255,255,0.1)";
-              inout.style.background = "rgba(255,255,255,0.2)";
-              bottom.style.borderColor = "rgba(255,255,255,0.1)";
-              topHead.style.borderColor = "rgba(255,255,255,0.1)";
-              left.style.borderColor = "rgba(255,255,255,0.1)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              content.forEach((item) => {
-                item.style.background = "rgb(85,85,85)";
-              });
-            } else if (str == "seti") {
-              settings.style.color = "rgb(245,245,245)";
-              status.style.borderColor = "rgba(255,255,255,0.1)";
-              qhead.style.color = "rgb(206,184,96)";
-              document.body.style.background = "rgb(21,23,24)";
-              document.body.style.color = "rgb(245,245,245)";
-              inout.style.borderColor = "rgba(255,255,255,0.1)";
-              inout.style.background = "rgba(255,255,255,0.2)";
-              bottom.style.borderColor = "rgba(255,255,255,0.1)";
-              topHead.style.borderColor = "rgba(255,255,255,0.1)";
-              left.style.borderColor = "rgba(255,255,255,0.1)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              content.forEach((item) => {
-                item.style.background = "rgb(85,85,85)";
-              });
-            } else {
-              settings.style.color = "black";
-              status.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              document.body.style.background = "white";
-              document.body.style.color = "rgb(37, 37, 37)";
-              inout.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              inout.style.background = "rgba(36, 36, 36, 0.03)";
-              bottom.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              topHead.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              left.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              });
-              content.forEach((item) => {
-                item.style.background = "#f1f1f1";
-              });
-            }
-            if (str == "default") {
-              qhead.style.color = "rgb(138,35,152)";
-            } else if (str == "neat") {
-              qhead.style.color = "rgb(37,37,37)";
-            }
-          });
-
-        var coll = document.getElementsByClassName("collapsible");
-        var i;
-
-        for (i = 0; i < coll.length; i++) {
-          coll[i].addEventListener("click", function () {
-            this.classList.toggle("active");
-            var content = this.nextElementSibling;
-            if (content.style.maxHeight) {
-              content.style.maxHeight = null;
-            } else {
-              content.style.maxHeight = content.scrollHeight + "px";
-            }
-          });
-        }
-        function retriveQuery() {
-          let lines = document.querySelectorAll(".CodeMirror-line ");
-          let queries = [];
-          lines.forEach((line) => {
-            queries.push(line.innerText);
-          });
-          console.log(queries[0]);
-        }
-
-        function setCookie(theme) {
-          const d = new Date();
-          d.setTime(d.getTime() + 100 * 24 * 60 * 60 * 1000);
-          let expires = "expires=" + d.toUTCString();
-          document.cookie =
-            "displayBuildit =" + theme + ";" + expires + ";path=/";
-        }
-        function getCookie(cname) {
-          let name = cname + "=";
-          let decodedCookie = decodeURIComponent(document.cookie);
-          let ca = decodedCookie.split(";");
-          for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) == " ") {
-              c = c.substring(1);
-            }
-            if (c.indexOf(name) == 0) {
-              return c.substring(name.length, c.length);
-            }
-          }
-          return "";
-        }
-        window.onload = function () {
-          setTimeout(() => {
-            let str = getCookie("displayBuildit");
-            editor.setOption("theme", str);
-            if (str == "monokai") {
-              settings.style.color = "rgb(245,245,245)";
-              status.style.borderColor = "rgba(255,255,255,0.1)";
-              document.body.style.background = "rgb(39,40,34)";
-              document.body.style.color = "rgb(245,245,245)";
-              qhead.style.color = "rgb(211,38,100)";
-              inout.style.borderColor = "rgba(255,255,255,0.1)";
-              inout.style.background = "rgba(255,255,255,0.2)";
-              bottom.style.borderColor = "rgba(255,255,255,0.1)";
-              topHead.style.borderColor = "rgba(255,255,255,0.1)";
-              left.style.borderColor = "rgba(255,255,255,0.1)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              content.forEach((item) => {
-                item.style.background = "rgb(85,85,85)";
-              });
-            } else if (str == "material-darker") {
-              settings.style.color = "rgb(245,245,245)";
-              qhead.style.color = "rgb(177,131,207)";
-              document.body.style.background = "rgb(33,33,33)";
-              document.body.style.color = "rgb(245,245,245)";
-              inout.style.borderColor = "rgba(255,255,255,0.1)";
-              inout.style.background = "rgba(255,255,255,0.2)";
-              bottom.style.borderColor = "rgba(255,255,255,0.1)";
-              topHead.style.borderColor = "rgba(255,255,255,0.1)";
-              left.style.borderColor = "rgba(255,255,255,0.1)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              content.forEach((item) => {
-                item.style.background = "rgb(85,85,85)";
-              });
-            } else if (str == "seti") {
-              settings.style.color = "rgb(245,245,245)";
-              status.style.borderColor = "rgba(255,255,255,0.1)";
-              qhead.style.color = "rgb(206,184,96)";
-              document.body.style.background = "rgb(21,23,24)";
-              document.body.style.color = "rgb(245,245,245)";
-              inout.style.borderColor = "rgba(255,255,255,0.1)";
-              inout.style.background = "rgba(255,255,255,0.2)";
-              bottom.style.borderColor = "rgba(255,255,255,0.1)";
-              topHead.style.borderColor = "rgba(255,255,255,0.1)";
-              left.style.borderColor = "rgba(255,255,255,0.1)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(255,255,255,0.1)";
-              });
-              content.forEach((item) => {
-                item.style.background = "rgb(85,85,85)";
-              });
-            } else {
-              settings.style.color = "white";
-              status.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              document.body.style.background = "white";
-              document.body.style.color = "rgb(37, 37, 37)";
-              inout.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              inout.style.background = "rgba(36, 36, 36, 0.03)";
-              bottom.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              topHead.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              left.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              th.forEach((item) => {
-                item.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              });
-              td.forEach((item) => {
-                item.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              });
-              table.forEach((item) => {
-                item.style.borderColor = "rgba(36, 36, 36, 0.171)";
-              });
-              content.forEach((item) => {
-                item.style.background = "#f1f1f1";
-              });
-            }
-            if (str == "default") {
-              qhead.style.color = "rgb(138,35,152)";
-            } else if (str == "neat") {
-              qhead.style.color = "rgb(37,37,37)";
-            }
-            if (str == "neat") {
-              $("#t1").prop("checked", true);
-            } else if (str == "default") {
-              $("#t2").prop("checked", true);
-            } else if (str == "monokai") {
-              $("#t3").prop("checked", true);
-            } else if (str == "material-darker") {
-              $("#t4").prop("checked", true);
-            } else {
-              $("#t5").prop("checked", true);
-            }
-          }, 10);
-        };
-      </script>
     </section>
     <div id="myModal" class="modal">
       <!-- Modal content -->
@@ -998,16 +722,16 @@
         <div class="modal-head">
           <span>Success!!</span>
         </div>
-        <p>You have successfully solved the question</p>
+        <p id="Acontent">You have successfully solved the question</p>
         <div class="modal-value">-10 Points-</div>
-        <span class="close">Close</span>
+        <span class="close" id="aclose">Close</span>
       </div>
     </div>
     <script>
       var modal = document.getElementById("myModal");
 
       // Get the <span> element that closes the modal
-      var span = document.getElementsByClassName("close")[0];
+      var span = document.getElementById("aclose");
 
       // When the user clicks on <span> (x), close the modal
       span.onclick = function () {
@@ -1019,6 +743,447 @@
         if (event.target == modal) {
           modal.style.display = "none";
         }
+      };
+    </script>
+    <script>
+      function setOpen() {
+        document.querySelector(".top-setting").style.display = "flex";
+      }
+      function setClose() {
+        document.querySelector(".top-setting").style.display = "none";
+      }
+      var editor = CodeMirror.fromTextArea(
+        document.getElementById("code-input"),
+        {
+          lineNumbers: true,
+          mode: "text/x-sql",
+          theme: "neat",
+          lineWrapping: true,
+        }
+      );
+      const statusVal = document.querySelector(".statusVal");
+      let inout = document.querySelector(".inout");
+      let th = document.querySelectorAll("th");
+      let td = document.querySelectorAll("td");
+      let table = document.querySelectorAll("table");
+      let bottom = document.querySelector(".bottom");
+      let topHead = document.querySelector(".top-head");
+      let left = document.querySelector(".left");
+      let qhead = document.querySelector(".qhead");
+      let editorpart = document.querySelector(".CodeMirror-scroll");
+      let status = document.querySelector(".bot-head");
+      let content = document.querySelectorAll(".content");
+      let settings = document.getElementById("settings");
+      document.getElementById("size").addEventListener("change", (e) => {
+        editorpart.style.fontSize = e.target.value;
+      });
+      document
+        .getElementById("theme")
+        .addEventListener("change", function (event) {
+          let str = event.target.value.toString();
+          editor.setOption("theme", str);
+          setCookie(str);
+          if (str == "monokai") {
+            settings.style.color = "rgb(245,245,245)";
+            status.style.borderColor = "rgba(255,255,255,0.1)";
+            document.body.style.background = "rgb(39,40,34)";
+            document.body.style.color = "rgb(245,245,245)";
+            qhead.style.color = "rgb(211,38,100)";
+            inout.style.borderColor = "rgba(255,255,255,0.1)";
+            inout.style.background = "rgba(255,255,255,0.2)";
+            bottom.style.borderColor = "rgba(255,255,255,0.1)";
+            topHead.style.borderColor = "rgba(255,255,255,0.1)";
+            left.style.borderColor = "rgba(255,255,255,0.1)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            content.forEach((item) => {
+              item.style.background = "rgb(85,85,85)";
+            });
+          } else if (str == "material-darker") {
+            settings.style.color = "rgb(245,245,245)";
+            qhead.style.color = "rgb(177,131,207)";
+            document.body.style.background = "rgb(33,33,33)";
+            document.body.style.color = "rgb(245,245,245)";
+            inout.style.borderColor = "rgba(255,255,255,0.1)";
+            inout.style.background = "rgba(255,255,255,0.2)";
+            bottom.style.borderColor = "rgba(255,255,255,0.1)";
+            topHead.style.borderColor = "rgba(255,255,255,0.1)";
+            left.style.borderColor = "rgba(255,255,255,0.1)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            content.forEach((item) => {
+              item.style.background = "rgb(85,85,85)";
+            });
+          } else if (str == "seti") {
+            settings.style.color = "rgb(245,245,245)";
+            status.style.borderColor = "rgba(255,255,255,0.1)";
+            qhead.style.color = "rgb(206,184,96)";
+            document.body.style.background = "rgb(21,23,24)";
+            document.body.style.color = "rgb(245,245,245)";
+            inout.style.borderColor = "rgba(255,255,255,0.1)";
+            inout.style.background = "rgba(255,255,255,0.2)";
+            bottom.style.borderColor = "rgba(255,255,255,0.1)";
+            topHead.style.borderColor = "rgba(255,255,255,0.1)";
+            left.style.borderColor = "rgba(255,255,255,0.1)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            content.forEach((item) => {
+              item.style.background = "rgb(85,85,85)";
+            });
+          } else {
+            settings.style.color = "black";
+            status.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            document.body.style.background = "white";
+            document.body.style.color = "rgb(37, 37, 37)";
+            inout.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            inout.style.background = "rgba(36, 36, 36, 0.03)";
+            bottom.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            topHead.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            left.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            });
+            content.forEach((item) => {
+              item.style.background = "#f1f1f1";
+            });
+          }
+          if (str == "default") {
+            qhead.style.color = "rgb(138,35,152)";
+          } else if (str == "neat") {
+            qhead.style.color = "rgb(37,37,37)";
+          }
+        });
+
+      var coll = document.getElementsByClassName("collapsible");
+      var i;
+
+      for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function () {
+          this.classList.toggle("active");
+          var content = this.nextElementSibling;
+          if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+          } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+          }
+        });
+      }
+      const load1 = document.getElementById("load1");
+      const load2 = document.getElementById("load2");
+      function retriveQuery(submit) {
+        if (submit) {
+          load2.style.display = "block";
+        } else {
+          load1.style.display = "block";
+        }
+        let lines = document.querySelectorAll(".CodeMirror-line ");
+        let queries = "";
+        lines.forEach((line) => {
+          queries += line.innerText;
+          queries += "/*";
+        });
+        sendSubmission(queries, submit);
+      }
+
+      function jsonToTable(tdata) {
+        let tkeys = Object.keys(tdata[0]);
+        let table1 = document.createElement("table");
+        let row = table1.insertRow();
+        for (var i = 0; i < tkeys.length; i++) {
+          let cell = row.insertCell();
+          cell.innerHTML = tkeys[i];
+        }
+        for (var i = 0; i < tdata.length; i++) {
+          let row = table1.insertRow();
+          for (var j = 0; j < tkeys.length; j++) {
+            let cell = row.insertCell();
+            cell.innerHTML = tdata[i][tkeys[j]];
+          }
+        }
+        return table1;
+      }
+      function decodeHtml(html) {
+        var txt = document.createElement("textarea");
+        txt.innerHTML = html;
+        return txt.value;
+      }
+
+      if ("<%= data.questionSchema %>") {
+        let schema = "<%= JSON.stringify(data.questionSchema) %>";
+        schema = decodeHtml(schema);
+        schema = JSON.parse(schema);
+        let schemaTable = document.getElementById("schema");
+        schema.forEach((item) => {
+          let row = schemaTable.insertRow();
+          let cell1 = row.insertCell();
+          let cell2 = row.insertCell();
+          cell1.innerHTML = item.Field;
+          cell2.innerHTML = item.Type;
+        });
+      }
+
+      function sendSubmission(queries, submit) {
+        try {
+          var url = "<%= serverUrl %>/validateSubmissionDB";
+          $.ajax({
+            async: false,
+            url: url,
+            headers: { Authorization: "<%= token %>" },
+            type: "POST",
+            data: JSON.stringify({
+              tableName: "<%= data.tableName %>",
+              rollNumber: "<%= username %>",
+              questionId: "<%= data.questionId %>",
+              questionHiddenOutput: "<%= jsString %>",
+              dbSessionId: "<%= data.dbSessionId %>",
+              sqlCode: queries,
+              score: "<%= data.score %>",
+              submit: submit,
+            }),
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            processData: false,
+            dataType: "json",
+            success: function (response) {
+              console.log(response);
+              let tdata = response.data.results[0];
+              let tab1 = jsonToTable(tdata);
+              let tdata2 = "<%= JSON.stringify(data.questionHiddenOutput) %>";
+              const decodedString = decodeHtml(tdata2);
+              const data = JSON.parse(decodedString);
+              let tab2 = jsonToTable(data);
+              let out1 = document.getElementById("out1");
+              let out2 = document.getElementById("out2");
+              out1.innerHTML = "";
+              out1.appendChild(tab1);
+              out2.innerHTML = "";
+              out2.appendChild(tab2);
+              if (submit) {
+                load2.style.display = "none";
+              } else {
+                load1.style.display = "none";
+              }
+              document.querySelectorAll(".collapsible").forEach((item) => {
+                item.click();
+              });
+              statusVal.style.color = "rgb(1,120,238)";
+              statusVal.innerHTML = "Success (Run)";
+              if (submit) {
+                let as = "";
+                if (response.data.state) {
+                  statusVal.style.color = "rgb(72,195,118)";
+                  statusVal.innerHTML = "Success";
+                  as =
+                    '<div class="modal-content"><span class="material-icons-round icon"> done_outline </span><div class="modal-head"><span>Success!!</span></div><p id="Acontent">You have successfully solved the question</p><div class="modal-value">-<%= data.score %> Points-</div><span class="close" id="aclose">Tap anywhare to close</span></div>';
+                } else {
+                  statusVal.style.color = "rgb(251,188,4)";
+                  statusVal.innerHTML = "Incorrect Query";
+                  as =
+                    '<div class="modal-content"><span class="material-icons-round icon"> close </span><div class="modal-head"><span>Failed!!</span></div><p id="Acontent">Incorrect Query or Wrong Solution</p><div class="modal-value">-0 Points-</div><span class="close" id="aclose">Tap anywhare to close</span></div>';
+                }
+                var modal = document.getElementById("myModal");
+                modal.innerHTML = as;
+                modal.style.display = "block";
+              }
+            },
+            error: function (error) {
+              statusVal.style.color = "rgb(255,0,0)";
+              statusVal.innerHTML = "Error (Run)";
+              let as =
+                '<div class="modal-content"><span class="material-icons-round icon"> close </span><div class="modal-head"><span>Failed!!</span></div><p id="Acontent">Incorrect Query or Wrong Solution</p><div class="modal-value">-0 Points-</div><span class="close" id="aclose">Tap anywhare to close</span></div>';
+              if (submit) {
+                statusVal.style.color = "rgb(255,0,0)";
+                statusVal.innerHTML = "Error";
+                load2.style.display = "none";
+              } else {
+                load1.style.display = "none";
+              }
+              if (submit) {
+                var modal = document.getElementById("myModal");
+                modal.innerHTML = as;
+                modal.style.display = "block";
+              }
+            },
+          });
+        } catch (err) {
+          if (submit) {
+            load2.style.display = "none";
+          } else {
+            load1.style.display = "none";
+          }
+          let as =
+            '<div class="modal-content"><span class="material-icons-round icon"> close </span><div class="modal-head"><span>Failed!!</span></div><p id="Acontent">Incorrect Query or Wrong Solution</p><div class="modal-value">-0 Points-</div><span class="close" id="aclose">Tap anywhare to close</span></div>';
+          if (submit) {
+            var modal = document.getElementById("myModal");
+            modal.innerHTML = as;
+            modal.style.display = "block";
+            document.getElementById("Acontent").innerText =
+              "Error submitting the query";
+          }
+        }
+      }
+
+      function setCookie(theme) {
+        const d = new Date();
+        d.setTime(d.getTime() + 100 * 24 * 60 * 60 * 1000);
+        let expires = "expires=" + d.toUTCString();
+        document.cookie =
+          "displayBuildit =" + theme + ";" + expires + ";path=/";
+      }
+      function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(";");
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) == " ") {
+            c = c.substring(1);
+          }
+          if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+          }
+        }
+        return "";
+      }
+      window.onload = function () {
+        setTimeout(() => {
+          let str = getCookie("displayBuildit");
+          editor.setOption("theme", str);
+          if (str == "monokai") {
+            settings.style.color = "rgb(245,245,245)";
+            status.style.borderColor = "rgba(255,255,255,0.1)";
+            document.body.style.background = "rgb(39,40,34)";
+            document.body.style.color = "rgb(245,245,245)";
+            qhead.style.color = "rgb(211,38,100)";
+            inout.style.borderColor = "rgba(255,255,255,0.1)";
+            inout.style.background = "rgba(255,255,255,0.2)";
+            bottom.style.borderColor = "rgba(255,255,255,0.1)";
+            topHead.style.borderColor = "rgba(255,255,255,0.1)";
+            left.style.borderColor = "rgba(255,255,255,0.1)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            content.forEach((item) => {
+              item.style.background = "rgb(85,85,85)";
+            });
+          } else if (str == "material-darker") {
+            settings.style.color = "rgb(245,245,245)";
+            qhead.style.color = "rgb(177,131,207)";
+            document.body.style.background = "rgb(33,33,33)";
+            document.body.style.color = "rgb(245,245,245)";
+            inout.style.borderColor = "rgba(255,255,255,0.1)";
+            inout.style.background = "rgba(255,255,255,0.2)";
+            bottom.style.borderColor = "rgba(255,255,255,0.1)";
+            topHead.style.borderColor = "rgba(255,255,255,0.1)";
+            left.style.borderColor = "rgba(255,255,255,0.1)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            content.forEach((item) => {
+              item.style.background = "rgb(85,85,85)";
+            });
+          } else if (str == "seti") {
+            settings.style.color = "rgb(245,245,245)";
+            status.style.borderColor = "rgba(255,255,255,0.1)";
+            qhead.style.color = "rgb(206,184,96)";
+            document.body.style.background = "rgb(21,23,24)";
+            document.body.style.color = "rgb(245,245,245)";
+            inout.style.borderColor = "rgba(255,255,255,0.1)";
+            inout.style.background = "rgba(255,255,255,0.2)";
+            bottom.style.borderColor = "rgba(255,255,255,0.1)";
+            topHead.style.borderColor = "rgba(255,255,255,0.1)";
+            left.style.borderColor = "rgba(255,255,255,0.1)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(255,255,255,0.1)";
+            });
+            content.forEach((item) => {
+              item.style.background = "rgb(85,85,85)";
+            });
+          } else {
+            settings.style.color = "black";
+            status.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            document.body.style.background = "white";
+            document.body.style.color = "rgb(37, 37, 37)";
+            inout.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            inout.style.background = "rgba(36, 36, 36, 0.03)";
+            bottom.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            topHead.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            left.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            th.forEach((item) => {
+              item.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            });
+            td.forEach((item) => {
+              item.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            });
+            table.forEach((item) => {
+              item.style.borderColor = "rgba(36, 36, 36, 0.171)";
+            });
+            content.forEach((item) => {
+              item.style.background = "#f1f1f1";
+            });
+          }
+          if (str == "default") {
+            qhead.style.color = "rgb(138,35,152)";
+          } else if (str == "neat") {
+            qhead.style.color = "rgb(37,37,37)";
+          }
+          if (str == "neat") {
+            $("#t1").prop("checked", true);
+          } else if (str == "default") {
+            $("#t2").prop("checked", true);
+          } else if (str == "monokai") {
+            $("#t3").prop("checked", true);
+          } else if (str == "material-darker") {
+            $("#t4").prop("checked", true);
+          } else {
+            $("#t5").prop("checked", true);
+          }
+        }, 10);
       };
     </script>
     <script src="plugins/jQuery/jquery.min.js"></script>

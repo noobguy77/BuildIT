@@ -61,8 +61,8 @@
 				<input name="questionId" type="text"/>
 				<h4>Question Name</h4>
 				<input name="questionName" type="text"/>
-				<h4>Contest ID</h4>
-				<input name="contestId" type="text"/>
+				<h4>Session ID</h4>
+				<input name="dbSessionId" type="text"/>
 				<p class="comments">Description</p>
 				<textarea name="questionDescriptionText" rows="20"></textarea>
 				<p class="comments">Example Input:</p>
@@ -128,12 +128,14 @@
                 </script>
 				<p class="comments">Example Output:</p>
 				<textarea name="questionExampleOutput" rows="10" ></textarea>
-				<p class="comments">Hidden Output:</p>
-				<textarea name="questionHiddenOutput" rows="10"></textarea>
+				<p class="comments">Your Query:</p>
+				<textarea name="questionSolution" rows="10"></textarea>
 				<p class="comments">Explanation</p>
 				<textarea name="questionExplanation" rows="20"></textarea>
 				<p class="comments">Score</p>
 				<textarea name="score" rows="2"></textarea>
+                <p class="comments">Table Name</p>
+				<textarea name="tableName" rows="2"></textarea>
 				<p class="comments"><b>Difficulty</b></p>
 				<input type="radio" name="difficulty" value="E"> Easy </input>
 				<input type="radio" name="difficulty" value="M"> Medium </input>
